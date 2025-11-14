@@ -217,16 +217,6 @@ st.markdown(f"""
         border-bottom: 3px solid {SystemConfig.COLOR_ACCENT};
     }}
     
-    /* Chart containers */
-    .chart-container {{
-        background: white;
-        border: 1px solid #E5E7EB;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }}
-    
     /* AI detection section */
     .ai-container {{
         background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
@@ -582,7 +572,8 @@ def render_ai_detection():
     
     st.markdown('<div class="ai-container">', unsafe_allow_html=True)
     st.markdown("### 🤖 AI-Powered Plant Health Detection")
-    st.markdown("**Real-time lettuce health classification using TensorFlow.js + Teachable Machine**")
+    st.markdown("**Real-time lettuce health classification using Google Teachable Machine**")
+    st.markdown("*Point camera at plant, watch live predictions, then capture for detailed analysis*")
     
     # AI detection interface with live camera + capture
     st.components.v1.html(f"""
@@ -1079,7 +1070,7 @@ def main():
         # System health score
         health_score, health_status = SensorAnalyzer.calculate_system_health(current)
         
-        col1, col2, col3 = st.columns([2, 1, 1])
+        col1, col2 = st.columns([3, 1])
         with col1:
             st.markdown(f"""
             <div style="background: linear-gradient(135deg, {SystemConfig.COLOR_PRIMARY} 0%, {SystemConfig.COLOR_SECONDARY} 100%);
@@ -1092,16 +1083,14 @@ def main():
         
         with col2:
             st.metric(
-                "🌡️ Ambient",
-                f"{current['air_temp']:.1f}°C",
-                f"{current['humidity']:.1f}% RH"
-            )
-        
-        with col3:
-            st.metric(
                 "⏰ Last Update",
                 current['timestamp'].strftime("%H:%M:%S"),
-                "Just now"
+                "Live"
+            )
+            st.metric(
+                "🌡️ Ambient",
+                f"{current['air_temp']:.1f}°C",
+                f"{current['humidity']:.1f}%"
             )
         
         st.markdown("---")
@@ -1154,52 +1143,44 @@ def main():
             """, unsafe_allow_html=True)
         
         # Real-time charts
-        st.markdown('<h2 class="section-header">📈 Real-Time Monitoring</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="section-header">📈 Real-Time Monitoring (Last 6 Hours)</h2>', unsafe_allow_html=True)
         
         historical = simulator.get_historical_data(hours=6, points=72)
         
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
             fig_ph = create_realtime_chart(
                 historical, 'pH', 'pH Level', 'pH', 
                 SystemConfig.COLOR_PRIMARY,
                 SystemConfig.PH_TARGET, SystemConfig.PH_TOLERANCE
             )
             st.plotly_chart(fig_ph, use_container_width=True, config={'displayModeBar': False})
-            st.markdown('</div>', unsafe_allow_html=True)
         
         with col2:
-            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
             fig_ec = create_realtime_chart(
                 historical, 'ec', 'EC Level', 'mS/cm',
                 SystemConfig.COLOR_SECONDARY,
                 SystemConfig.EC_TARGET, SystemConfig.EC_TOLERANCE
             )
             st.plotly_chart(fig_ec, use_container_width=True, config={'displayModeBar': False})
-            st.markdown('</div>', unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
             fig_temp = create_realtime_chart(
                 historical, 'water_temp', 'Water Temperature', '°C',
                 '#06B6D4',
                 SystemConfig.TEMP_OPTIMAL, (SystemConfig.TEMP_MAX - SystemConfig.TEMP_MIN) / 2
             )
             st.plotly_chart(fig_temp, use_container_width=True, config={'displayModeBar': False})
-            st.markdown('</div>', unsafe_allow_html=True)
         
         with col2:
-            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
             fig_humidity = create_realtime_chart(
                 historical, 'humidity', 'Relative Humidity', '%',
                 '#F59E0B'
             )
             st.plotly_chart(fig_humidity, use_container_width=True, config={'displayModeBar': False})
-            st.markdown('</div>', unsafe_allow_html=True)
     
     # TAB 2: AI PLANT HEALTH
     with tab2:
@@ -1207,14 +1188,18 @@ def main():
     
     # TAB 3: ANALYTICS
     with tab3:
-        st.markdown('<h2 class="section-header">📊 Long-Term Analytics</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="section-header">📊 Historical Trend Analysis</h2>', unsafe_allow_html=True)
         
-        # Time range selector
-        time_range = st.selectbox(
-            "📅 Select Time Range",
-            ["Last 6 Hours", "Last 12 Hours", "Last 24 Hours", "Last 7 Days"],
-            index=2
-        )
+        # Time range selector with clear label
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            time_range = st.selectbox(
+                "📅 Data Time Range",
+                ["Last 6 Hours", "Last 12 Hours", "Last 24 Hours", "Last 7 Days"],
+                index=2
+            )
+        with col2:
+            st.info(f"**{72 if '6 Hours' in time_range else 144 if '12 Hours' in time_range else 288 if '24 Hours' in time_range else 2016}** data points")
         
         hours_map = {
             "Last 6 Hours": 6,
@@ -1229,10 +1214,8 @@ def main():
         historical = simulator.get_historical_data(hours=hours, points=points)
         
         # Multi-metric comparison
-        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         fig_multi = create_multi_metric_chart(historical)
         st.plotly_chart(fig_multi, use_container_width=True, config={'displayModeBar': False})
-        st.markdown('</div>', unsafe_allow_html=True)
         
         # Statistical summary
         st.markdown('<h2 class="section-header">📈 Statistical Summary</h2>', unsafe_allow_html=True)
@@ -1240,23 +1223,24 @@ def main():
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            st.metric("pH Mean", f"{historical['pH'].mean():.2f}")
-            st.metric("pH Std Dev", f"{historical['pH'].std():.3f}")
+            st.metric("**pH** Mean", f"{historical['pH'].mean():.2f} pH")
+            st.metric("**pH** Std Dev", f"±{historical['pH'].std():.3f}")
         
         with col2:
-            st.metric("EC Mean", f"{historical['ec'].mean():.2f}")
-            st.metric("EC Std Dev", f"{historical['ec'].std():.3f}")
+            st.metric("**EC** Mean", f"{historical['ec'].mean():.2f} mS/cm")
+            st.metric("**EC** Std Dev", f"±{historical['ec'].std():.3f}")
         
         with col3:
-            st.metric("Temp Mean", f"{historical['water_temp'].mean():.1f}°C")
-            st.metric("Temp Range", f"{historical['water_temp'].max() - historical['water_temp'].min():.1f}°C")
+            st.metric("**Temp** Mean", f"{historical['water_temp'].mean():.1f}°C")
+            st.metric("**Temp** Range", f"{historical['water_temp'].max() - historical['water_temp'].min():.1f}°C")
         
         with col4:
-            st.metric("Humidity Mean", f"{historical['humidity'].mean():.1f}%")
-            st.metric("Humidity Range", f"{historical['humidity'].max() - historical['humidity'].min():.1f}%")
+            st.metric("**Humidity** Mean", f"{historical['humidity'].mean():.1f}%")
+            st.metric("**Humidity** Range", f"{historical['humidity'].max() - historical['humidity'].min():.1f}%")
         
         # Data table
-        with st.expander("📋 **View Raw Data**"):
+        st.markdown("---")
+        with st.expander("📋 **View Raw Sensor Data Table**", expanded=False):
             st.dataframe(
                 historical.style.format({
                     'pH': '{:.2f}',
