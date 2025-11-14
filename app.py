@@ -217,15 +217,6 @@ st.markdown(f"""
         border-bottom: 3px solid {SystemConfig.COLOR_ACCENT};
     }}
     
-    /* AI detection section */
-    .ai-container {{
-        background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
-        border-radius: 15px;
-        padding: 2rem;
-        margin: 1rem 0;
-        border: 2px solid {SystemConfig.COLOR_PRIMARY};
-    }}
-    
     /* Alert messages */
     .alert-box {{
         border-left: 4px solid {SystemConfig.COLOR_DANGER};
@@ -570,10 +561,9 @@ def create_multi_metric_chart(df: pd.DataFrame) -> go.Figure:
 def render_ai_detection():
     """Render AI plant health detection interface"""
     
-    st.markdown('<div class="ai-container">', unsafe_allow_html=True)
     st.markdown("### 🤖 AI-Powered Plant Health Detection")
     st.markdown("**Real-time lettuce health classification using Google Teachable Machine**")
-    st.markdown("*Point camera at plant, watch live predictions, then capture for detailed analysis*")
+    st.info("📸 **How to use:** Point camera at plant → Watch live predictions → Click 'Capture & Analyze' for detailed results")
     
     # AI detection interface with live camera + capture
     st.components.v1.html(f"""
@@ -949,8 +939,6 @@ def render_ai_detection():
         init();
     </script>
     """, height=1800)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
     
     # Technical specifications
     with st.expander("🔬 **Technical Specifications**", expanded=False):
